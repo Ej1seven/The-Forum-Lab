@@ -1,6 +1,7 @@
 import { Post } from '../entities/Post';
 import { Resolver, Query, Ctx, Arg, Int, Mutation } from 'type-graphql';
 import { MyContext } from '../types';
+
 //PostResolver will be used to pull the necessary data from the Post table
 @Resolver()
 export class PostResolver {
@@ -9,7 +10,7 @@ export class PostResolver {
   //Uses the context property from buildschema located in index.ts and imports it using the @Ctx function in graphql to connect to the entity manager from MikroOrm.
   //We used an await statement to pull the orm data and this is reason for defining Promise<Post[]> in Typescript
   //the posts function is used by graphql to pull all the posts from the Post table
-  posts(@Ctx() { em }: MyContext): Promise<Post[]> {
+  async posts(@Ctx() { em }: MyContext): Promise<Post[]> {
     return em.find(Post, {});
   }
   //this query returns the post matching the id or return null

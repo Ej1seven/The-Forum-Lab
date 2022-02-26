@@ -18,11 +18,13 @@ import { PostResolver } from './resolvers/post';
 //UserResolver is used query or mutate the Users table
 import { UserResolver } from './resolvers/user';
 //__prod__ is used to notify the server when the application is in production mode
-import { __prod__ } from './constants';
-import { MyContext } from './types';
+import { COOKIE_NAME, __prod__ } from './constants';
 //used to revert the Apollo Server GUI to the previous version
 import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core';
+//cors tells the server to include the proper header on every response
 import cors from 'cors';
+import { sendEmail } from './utils/sendEmail';
+import { User } from './entities/User';
 
 //Async statement used to connect MikroORM to my Postgres database
 const main = async () => {
@@ -33,8 +35,15 @@ const main = async () => {
   const app = express();
 
   app.set('trust proxy', 1);
-
-  app.use(cors());
+  //tells the server to include the front-end url to the http header on every response
+  //doing this ensures the client and server have matching origins preventing any errors
+  app.use(
+    cors({
+      origin: 'http://localhost:3000',
+      //setting credentials to true allows for cookies to be passed through the http header
+      credentials: true,
+    })
+  );
   //It's an open source tool that runs as a service in the background that allows you to store data in memory for high-performance data retrieval and storage
   //Redis will be used in this application as a cache to store frequently accessed data in memory i.e(sessions).
   const redis = require('ioredis');
@@ -57,7 +66,7 @@ const main = async () => {
   //Server created a session through Apollo Server
   app.use(
     session({
-      name: 'qid',
+      name: COOKIE_NAME,
       store: new RedisStore({ client: redisClient, disableTouch: true }),
       cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
@@ -76,7 +85,7 @@ const main = async () => {
       resolvers: [HelloResolver, PostResolver, UserResolver],
       validate: false,
     }),
-    context: ({ req, res }): MyContext => ({ em: orm.em, req, res }),
+    context: ({ req, res }) => ({ em: orm.em, req, res }),
     //This plugin reverts back to the graphql playground to allow cookies to be passed between the server and the client
     plugins: [
       ApolloServerPluginLandingPageGraphQLPlayground({
@@ -86,7 +95,12 @@ const main = async () => {
   });
   //This following function start apollo server and applies the needed middleware
   await apolloServer.start();
-  apolloServer.applyMiddleware({ app });
+  apolloServer.applyMiddleware({
+    app,
+    //setting cors to false makes sure no changes are made to the cors policy
+    //we have already configured cors in the server so there is no need to make cors configurations in apolloServer
+    cors: false,
+  });
   //The server listens for traffic on port 4000
   app.listen(4000, () => {
     console.log('server started on localhost:4000');

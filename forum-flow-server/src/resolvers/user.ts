@@ -6,19 +6,14 @@ import {
   Query,
   Mutation,
   Field,
-  InputType,
   Arg,
   Ctx,
   ObjectType,
 } from 'type-graphql';
-//UsernamePasswordInput receives the username and password parameters
-@InputType()
-class UsernamePasswordInput {
-  @Field()
-  username: string;
-  @Field()
-  password: string;
-}
+import { EntityManager } from '@mikro-orm/postgresql';
+import { COOKIE_NAME } from '../constants';
+import { UsernamePasswordInput } from './UsernamePasswordInput';
+import { validateRegister } from '../utils/validateRegister';
 //FieldError displays the field ie(username, password) and the error message if the errors field comes returns true
 @ObjectType()
 class FieldError {
@@ -40,6 +35,12 @@ class UserResponse {
 //The UserResolver is used register and login users of the application
 @Resolver()
 export class UserResolver {
+  @Mutation(() => Boolean)
+  async forgotPassword(@Arg('email') email: string, @Ctx() { em }: MyContext) {
+    // const user = await em.findOne(User, { email });
+    return true;
+  }
+
   @Query(() => User, { nullable: true })
   async me(@Ctx() { req, em }: MyContext) {
     // you are not logged in
@@ -56,32 +57,30 @@ export class UserResolver {
     @Arg('options') options: UsernamePasswordInput,
     @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
-    if (options.username.length <= 2) {
-      return {
-        errors: [
-          { field: 'username', message: 'length must be greater than 2' },
-        ],
-      };
-    }
-
-    if (options.password.length <= 2) {
-      return {
-        errors: [
-          { field: 'password', message: 'length must be greater than 2' },
-        ],
-      };
+    const errors = validateRegister(options);
+    if (errors) {
+      return { errors };
     }
     //argon2.hash is used to hash the password provided but the user.
     const hashedPassword = await argon2.hash(options.password);
-    //em.create is used by MikroOrm to create a new user and add the username/password fields for that user to the Users table
-    const user = em.create(User, {
-      username: options.username,
-      password: hashedPassword,
-    });
+    let user;
     try {
-      //em.persistAndFlush is used by MikroOrm to push the newly created user to the User table
-      await em.persistAndFlush(user);
+      //em is taken from EntityManager and used by KnexJs to add the username/password fields for that user to the Users table
+      //After the user information is stored into the User table the user data is returned to the client.
+      const result = await (em as EntityManager)
+        .createQueryBuilder(User)
+        .getKnexQuery()
+        .insert({
+          username: options.username,
+          email: options.email,
+          password: hashedPassword,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        .returning('*');
+      user = result[0];
     } catch (err) {
+      //duplicate username error
       if (err.code === '23505') {
         return {
           errors: [{ field: 'username', message: 'username already exists' }],
@@ -98,11 +97,17 @@ export class UserResolver {
   //the login mutation adds logs users in by first finding the username in the Users table. Once the user name is found it compares the passwords using argon2. If the users username or password are not correct an error message will return
   @Mutation(() => UserResponse)
   async login(
-    @Arg('options') options: UsernamePasswordInput,
+    @Arg('usernameOrEmail') usernameOrEmail: string,
+    @Arg('password') password: string,
     @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     //em.findOne is used by MikroOrm to find the user in the User table that has a matching username.
-    const user = await em.findOne(User, { username: options.username });
+    const user = await em.findOne(
+      User,
+      usernameOrEmail.includes('@')
+        ? { email: usernameOrEmail }
+        : { username: usernameOrEmail }
+    );
     if (!user) {
       return {
         errors: [
@@ -114,7 +119,7 @@ export class UserResolver {
       };
     }
     //argon2.verify compares the hash password to the password provided by the user
-    const valid = await argon2.verify(user.password, options.password);
+    const valid = await argon2.verify(user.password, password);
     if (!valid) {
       return {
         errors: [
@@ -132,5 +137,21 @@ export class UserResolver {
     req.session.userId = user._id;
 
     return { user };
+  }
+
+  @Mutation(() => Boolean)
+  logout(@Ctx() { req, res }: MyContext) {
+    return new Promise((resolve) =>
+      req.session.destroy((err) => {
+        res.clearCookie(COOKIE_NAME);
+        if (err) {
+          console.log(err);
+          resolve(false);
+          return;
+        } else {
+          resolve(true);
+        }
+      })
+    );
   }
 }

@@ -20,7 +20,10 @@ const main = async () => {
     await orm.getMigrator().up();
     const app = (0, express_1.default)();
     app.set('trust proxy', 1);
-    app.use((0, cors_1.default)());
+    app.use((0, cors_1.default)({
+        origin: 'http://localhost:3000',
+        credentials: true,
+    }));
     const redis = require('ioredis');
     const session = require('express-session');
     let RedisStore = require('connect-redis')(session);
@@ -32,7 +35,7 @@ const main = async () => {
         console.error('Redis connecton establised');
     });
     app.use(session({
-        name: 'qid',
+        name: constants_1.COOKIE_NAME,
         store: new RedisStore({ client: redisClient, disableTouch: true }),
         cookie: {
             maxAge: 1000 * 60 * 60 * 24 * 365 * 10,
@@ -57,7 +60,10 @@ const main = async () => {
         ],
     });
     await apolloServer.start();
-    apolloServer.applyMiddleware({ app });
+    apolloServer.applyMiddleware({
+        app,
+        cors: false,
+    });
     app.listen(4000, () => {
         console.log('server started on localhost:4000');
     });
