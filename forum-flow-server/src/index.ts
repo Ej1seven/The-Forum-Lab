@@ -25,6 +25,7 @@ import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-co
 import cors from 'cors';
 import { sendEmail } from './utils/sendEmail';
 import { User } from './entities/User';
+import Redis from 'ioredis';
 
 //Async statement used to connect MikroORM to my Postgres database
 const main = async () => {
@@ -46,7 +47,7 @@ const main = async () => {
   );
   //It's an open source tool that runs as a service in the background that allows you to store data in memory for high-performance data retrieval and storage
   //Redis will be used in this application as a cache to store frequently accessed data in memory i.e(sessions).
-  const redis = require('ioredis');
+  const redis = new Redis();
   //When the client makes a login request to the server, the server will create a session and store it on the server-side.
   //When the server responds to the client, it sends a cookie.
   //This cookie will contain the session’s unique id stored on the server, which will now be stored on the client.
@@ -55,19 +56,19 @@ const main = async () => {
   //This allows Redis to now store the session in cache
   let RedisStore = require('connect-redis')(session);
   //redisClient creates a new client connection to Redis
-  let redisClient = redis.createClient();
+  // let redisClient = redis.createClient();
   //The two following checks to see if Redis is connected or not
-  redisClient.on('error', function (error) {
+  redis.on('error', function (error) {
     console.error('Error encountered: ', error);
   });
-  redisClient.on('connect', function (error) {
+  redis.on('connect', function (error) {
     console.error('Redis connecton establised');
   });
   //Server created a session through Apollo Server
   app.use(
     session({
       name: COOKIE_NAME,
-      store: new RedisStore({ client: redisClient, disableTouch: true }),
+      store: new RedisStore({ client: redis, disableTouch: true }),
       cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
         httpOnly: true,
@@ -85,7 +86,7 @@ const main = async () => {
       resolvers: [HelloResolver, PostResolver, UserResolver],
       validate: false,
     }),
-    context: ({ req, res }) => ({ em: orm.em, req, res }),
+    context: ({ req, res }) => ({ em: orm.em, req, res, redis }),
     //This plugin reverts back to the graphql playground to allow cookies to be passed between the server and the client
     plugins: [
       ApolloServerPluginLandingPageGraphQLPlayground({

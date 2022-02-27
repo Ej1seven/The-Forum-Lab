@@ -25,11 +25,11 @@ export const Login: React.FC<{}> = ({}) => {
     <Wrapper variant="small">
       <Formik
         //sets the initial values for username and password to an empty string
-        initialValues={{ username: '', password: '' }}
+        initialValues={{ usernameOrEmail: '', password: '' }}
         //onSubmits sends the values inputted by the end user for username and password to the server using login();
         onSubmit={async (values, { setErrors }) => {
           //login() uses the graphql client (urql) to send the data to the server.
-          const response = await login({ options: values });
+          const response = await login(values);
           //if the server responds with a error the error message will appear below the input box
           //else if the server responds with the user data the user will be taken to another page
           if (response.data?.login.errors) {
@@ -46,9 +46,9 @@ export const Login: React.FC<{}> = ({}) => {
           //<form> element automatically hooks into Formik's handleSubmit and handleReset. All other props are passed directly through to the DOM node.
           <Form>
             <InputField
-              name="username"
-              placeholder="username"
-              label="Username"
+              name="usernameOrEmail"
+              placeholder="username or email"
+              label="Username or Email"
             />
             <Box mt={4}>
               <InputField

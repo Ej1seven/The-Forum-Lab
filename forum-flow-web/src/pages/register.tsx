@@ -27,11 +27,11 @@ export const Register: React.FC<registerProps> = ({}) => {
     <Wrapper variant="small">
       <Formik
         //sets the initial values for username and password to an empty string
-        initialValues={{ username: '', password: '' }}
+        initialValues={{ email: '', username: '', password: '' }}
         //onSubmits sends the values inputted by the end user for username and password to the server using register();
         onSubmit={async (values, { setErrors }) => {
           //register() uses the graphql client (urql) to send the data to the server.
-          const response = await register(values);
+          const response = await register({ options: values });
           //if the server responds with a error the error message will appear below the input box
           //else if the server responds with the user data the user will be taken to another page
           if (response.data?.register.errors) {
@@ -52,6 +52,9 @@ export const Register: React.FC<registerProps> = ({}) => {
               placeholder="username"
               label="Username"
             />
+            <Box mt={4}>
+              <InputField name="email" placeholder="email" label="Email" />
+            </Box>
             <Box mt={4}>
               <InputField
                 name="password"

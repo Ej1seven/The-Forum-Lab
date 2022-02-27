@@ -15,6 +15,7 @@ const user_1 = require("./resolvers/user");
 const constants_1 = require("./constants");
 const apollo_server_core_1 = require("apollo-server-core");
 const cors_1 = __importDefault(require("cors"));
+const ioredis_1 = __importDefault(require("ioredis"));
 const main = async () => {
     const orm = await core_1.MikroORM.init(mikro_orm_config_1.default);
     await orm.getMigrator().up();
@@ -24,19 +25,18 @@ const main = async () => {
         origin: 'http://localhost:3000',
         credentials: true,
     }));
-    const redis = require('ioredis');
+    const redis = new ioredis_1.default();
     const session = require('express-session');
     let RedisStore = require('connect-redis')(session);
-    let redisClient = redis.createClient();
-    redisClient.on('error', function (error) {
+    redis.on('error', function (error) {
         console.error('Error encountered: ', error);
     });
-    redisClient.on('connect', function (error) {
+    redis.on('connect', function (error) {
         console.error('Redis connecton establised');
     });
     app.use(session({
         name: constants_1.COOKIE_NAME,
-        store: new RedisStore({ client: redisClient, disableTouch: true }),
+        store: new RedisStore({ client: redis, disableTouch: true }),
         cookie: {
             maxAge: 1000 * 60 * 60 * 24 * 365 * 10,
             httpOnly: true,
@@ -52,7 +52,7 @@ const main = async () => {
             resolvers: [hello_1.HelloResolver, post_1.PostResolver, user_1.UserResolver],
             validate: false,
         }),
-        context: ({ req, res }) => ({ em: orm.em, req, res }),
+        context: ({ req, res }) => ({ em: orm.em, req, res, redis }),
         plugins: [
             (0, apollo_server_core_1.ApolloServerPluginLandingPageGraphQLPlayground)({
                 settings: { 'request.credentials': 'include' },
