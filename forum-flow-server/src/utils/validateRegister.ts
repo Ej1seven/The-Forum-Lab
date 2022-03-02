@@ -1,5 +1,5 @@
 import { UsernamePasswordInput } from '../resolvers/UsernamePasswordInput';
-
+// validateRegister makes sure the values entered by the end user on the registration page meet the following criteria
 export const validateRegister = (options: UsernamePasswordInput) => {
   if (!options.email.includes('@')) {
     return [{ field: 'email', message: 'invalid email' }];

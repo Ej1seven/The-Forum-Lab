@@ -26,7 +26,7 @@ export const Register: React.FC<registerProps> = ({}) => {
   return (
     <Wrapper variant="small">
       <Formik
-        //sets the initial values for username and password to an empty string
+        //sets the initial values for username, password, and email to an empty string
         initialValues={{ email: '', username: '', password: '' }}
         //onSubmits sends the values inputted by the end user for username and password to the server using register();
         onSubmit={async (values, { setErrors }) => {

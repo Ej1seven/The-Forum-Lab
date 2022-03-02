@@ -1,9 +1,6 @@
 import 'reflect-metadata';
 //Importing MikroORM - A typescript ORM used to query data from the AWS Postgres database
-import { MikroORM } from '@mikro-orm/core';
 //Importing configuration data needed to initialize MikroOrm
-import microConfig from './mikro-orm.config';
-import { Post } from './entities/Post';
 //server framework used to build JSON APIs
 import express from 'express';
 // Apollo Server is open-source GraphQL server that works with many Node.js HTTP server frameworks
@@ -23,15 +20,27 @@ import { COOKIE_NAME, __prod__ } from './constants';
 import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core';
 //cors tells the server to include the proper header on every response
 import cors from 'cors';
-import { sendEmail } from './utils/sendEmail';
-import { User } from './entities/User';
 import Redis from 'ioredis';
+import { createConnection } from 'typeorm';
+import { Post } from './entities/Post';
+import { User } from './entities/User';
 
-//Async statement used to connect MikroORM to my Postgres database
+//Async statement used to connect TypeORM to my Postgres database and initialize redis / apollo server
 const main = async () => {
-  const orm = await MikroORM.init(microConfig);
-  //getMigrator().up() runs the migrations once MikroORM is initiated
-  await orm.getMigrator().up();
+  //conn is used to configure my postgres db to connect to TypeOrm
+  const conn = await createConnection({
+    type: 'postgres',
+    host: '35.225.193.0',
+    database: 'forum-finder',
+    username: 'erikhunter',
+    password: 'dowatudo17',
+    logging: true,
+    synchronize: true,
+    entities: [Post, User],
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  });
 
   const app = express();
 
@@ -47,7 +56,7 @@ const main = async () => {
   );
   //It's an open source tool that runs as a service in the background that allows you to store data in memory for high-performance data retrieval and storage
   //Redis will be used in this application as a cache to store frequently accessed data in memory i.e(sessions).
-  const redis = new Redis();
+  const redis = new Redis(6379, '35.225.193.0');
   //When the client makes a login request to the server, the server will create a session and store it on the server-side.
   //When the server responds to the client, it sends a cookie.
   //This cookie will contain the session’s unique id stored on the server, which will now be stored on the client.
@@ -55,14 +64,12 @@ const main = async () => {
   //RedisStore connects Redis to the session created by the server
   //This allows Redis to now store the session in cache
   let RedisStore = require('connect-redis')(session);
-  //redisClient creates a new client connection to Redis
-  // let redisClient = redis.createClient();
   //The two following checks to see if Redis is connected or not
   redis.on('error', function (error) {
     console.error('Error encountered: ', error);
   });
-  redis.on('connect', function (error) {
-    console.error('Redis connecton establised');
+  redis.on('connect', function () {
+    console.log('Redis connecton establised');
   });
   //Server created a session through Apollo Server
   app.use(
@@ -86,7 +93,7 @@ const main = async () => {
       resolvers: [HelloResolver, PostResolver, UserResolver],
       validate: false,
     }),
-    context: ({ req, res }) => ({ em: orm.em, req, res, redis }),
+    context: ({ req, res }) => ({ req, res, redis }),
     //This plugin reverts back to the graphql playground to allow cookies to be passed between the server and the client
     plugins: [
       ApolloServerPluginLandingPageGraphQLPlayground({

@@ -1,6 +1,6 @@
 import { Field, InputType } from 'type-graphql';
 
-//UsernamePasswordInput receives the username and password parameters
+//UsernamePasswordInput receives the username,password, and email parameters
 @InputType()
 export class UsernamePasswordInput {
   @Field()
