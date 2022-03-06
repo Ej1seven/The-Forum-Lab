@@ -12,7 +12,7 @@ import { toErrorMap } from '../../utils/toErrorMap';
 import login from '../login';
 import NextLink from 'next/link';
 
-const ChangePassword: NextPage<{ token: string }> = ({ token }) => {
+const ChangePassword: NextPage = () => {
   const router = useRouter();
   const [, changePassword] = useChangePasswordMutation();
   const [tokenError, setTokenError] = useState('');
@@ -26,7 +26,11 @@ const ChangePassword: NextPage<{ token: string }> = ({ token }) => {
           //login() uses the graphql client (urql) to send the data to the server.
           const response = await changePassword({
             newPassword: values.newPassword,
-            token,
+            //router.query.token allows you to get the paramters from the url "http://localhost:3000/change-password/${token}" and return the token portion of the query
+            //the ternary statement below checks to see if a token was provided in the params
+            // if not the token will be set to an empty string
+            token:
+              typeof router.query.token === 'string' ? router.query.token : '',
           });
           //if the server responds with a error the error message will appear below the input box
           //else if the server responds with the user data the user will be taken to another page
@@ -78,11 +82,6 @@ const ChangePassword: NextPage<{ token: string }> = ({ token }) => {
     </Wrapper>
   );
 };
-//getInitialProps is a NextJS function that allows you to get the paramters from the url "http://localhost:3000/change-password/${token}" and return the token portion of the query
-ChangePassword.getInitialProps = ({ query }) => {
-  return {
-    token: query.token as string,
-  };
-};
+//getInitialProps is a NextJS function
 
 export default withUrqlClient(createUrqlClient)(ChangePassword);

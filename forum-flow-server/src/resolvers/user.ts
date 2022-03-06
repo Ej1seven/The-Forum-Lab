@@ -13,6 +13,8 @@ import {
   Arg,
   Ctx,
   ObjectType,
+  FieldResolver,
+  Root,
 } from 'type-graphql';
 import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from '../constants';
 import { UsernamePasswordInput } from './UsernamePasswordInput';
@@ -41,8 +43,17 @@ class UserResponse {
 //The UserResolver is used register and login users of the application
 //the changePassword mutation takes the token provided by the server and users new password input
 //and changes the users password
-@Resolver()
+@Resolver(User)
 export class UserResolver {
+  @FieldResolver(() => String)
+  email(@Root() user: User, @Ctx() { req }: MyContext) {
+    //this is the current user and its ok to show them their own email
+    if (req.session.userId === user._id) {
+      return user.email;
+    }
+    //current user wants to see someone elses email
+    return '';
+  }
   @Mutation(() => UserResponse)
   async changePassword(
     @Arg('token') token: string,

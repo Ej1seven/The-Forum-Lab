@@ -21,9 +21,11 @@ import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-co
 //cors tells the server to include the proper header on every response
 import cors from 'cors';
 import Redis from 'ioredis';
-import { createConnection } from 'typeorm';
+import { createConnection, Entity } from 'typeorm';
 import { Post } from './entities/Post';
 import { User } from './entities/User';
+import path from 'path';
+import { Updoot } from './entities/Updoot';
 
 //Async statement used to connect TypeORM to my Postgres database and initialize redis / apollo server
 const main = async () => {
@@ -36,11 +38,15 @@ const main = async () => {
     password: 'dowatudo17',
     logging: true,
     synchronize: true,
-    entities: [Post, User],
+    migrations: [path.join(__dirname, './migrations/*')],
+    entities: [Post, User, Updoot],
     ssl: {
       rejectUnauthorized: false,
     },
   });
+  await conn.runMigrations();
+  //
+  // await Post.delete({});
 
   const app = express();
 

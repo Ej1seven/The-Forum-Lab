@@ -17,6 +17,8 @@ const ioredis_1 = __importDefault(require("ioredis"));
 const typeorm_1 = require("typeorm");
 const Post_1 = require("./entities/Post");
 const User_1 = require("./entities/User");
+const path_1 = __importDefault(require("path"));
+const Updoot_1 = require("./entities/Updoot");
 const main = async () => {
     const conn = await (0, typeorm_1.createConnection)({
         type: 'postgres',
@@ -26,11 +28,13 @@ const main = async () => {
         password: 'dowatudo17',
         logging: true,
         synchronize: true,
-        entities: [Post_1.Post, User_1.User],
+        migrations: [path_1.default.join(__dirname, './migrations/*')],
+        entities: [Post_1.Post, User_1.User, Updoot_1.Updoot],
         ssl: {
             rejectUnauthorized: false,
         },
     });
+    await conn.runMigrations();
     const app = (0, express_1.default)();
     app.set('trust proxy', 1);
     app.use((0, cors_1.default)({

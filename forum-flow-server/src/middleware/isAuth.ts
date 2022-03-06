@@ -1,6 +1,6 @@
 import { MyContext } from 'src/types';
 import { MiddlewareFn } from 'type-graphql';
-//middleware function runs before the resolvers is execucuted
+//middleware function runs before the resolvers is exececuted
 //isAuth makes sure the user is Authenticated before allow them to proceed with the resolver
 export const isAuth: MiddlewareFn<MyContext> = ({ context }, next) => {
   if (!context.req.session.userId) {
