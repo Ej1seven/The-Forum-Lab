@@ -43,7 +43,7 @@ export class PostResolver {
   textSnippet(@Root() root: Post) {
     return root.text.slice(0, 50);
   }
-
+  //this query adds an up vote or down vote to the selected post
   @Mutation(() => Boolean)
   @UseMiddleware(isAuth)
   async vote(
@@ -59,6 +59,8 @@ export class PostResolver {
     //   postId,
     //   value: realValue,
     // });
+    //this transaction inserts the "userId", "postId", and value into the updoot table
+    //and adds or subtracts a point from the points field on the selected post
     getConnection().query(
       `
     START TRANSACTION;
@@ -91,11 +93,14 @@ export class PostResolver {
     const realLimitPlusOne = realLimit + 1;
 
     const replacements: any[] = [realLimitPlusOne];
-
+    //if the cursor is true then it replaces the current cursor with a new cursor date
     if (cursor) {
       replacements.push(new Date(parseInt(cursor)));
     }
-
+    //the posts querybuilder creates an creator object on the POST table and joins it with the User table by comparing the userID to the creatorId columns
+    //if the cursor is true then the createdAt field on the post is replaced with the new date
+    //the posts are displayed in descending order from newest post to oldest post
+    //limit is set to realLimitPlusOne
     const posts = await getConnection().query(
       `
     select p.*,
@@ -108,22 +113,7 @@ export class PostResolver {
     `,
       replacements
     );
-    //build the query used to view the post
-    // const queryBuilder = getConnection()
-    //   .getRepository(Post)
-    //   .createQueryBuilder('p')
-    //   .innerJoinAndSelect('p.creator', 'u', 'u._id = p."creatorId"')
-    //   .orderBy('p."createdAt"', 'DESC')
-    //   .take(realLimitPlusOne);
-    // //if the cursor parameter is true then the all post created after the current post will be displayed
-    // if (cursor) {
-    //   queryBuilder.where('p."createdAt" < :cursor', {
-    //     cursor: new Date(parseInt(cursor)),
-    //   });
-    // }
-    console.log('posts: ', posts);
-    // const posts = await queryBuilder.getMany();
-    //returns the post
+
     return {
       posts: posts.slice(0, realLimit),
       hasMore: posts.length === realLimitPlusOne,

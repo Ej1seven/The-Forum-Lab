@@ -32,20 +32,35 @@ const errorExchange: Exchange =
 
 export const cursorPagination = (): Resolver => {
   return (_parent, fieldArgs, cache, info) => {
+    console.log(info);
+    //entityKey = Query, fieldName = posts,
     const { parentKey: entityKey, fieldName } = info;
-
+    //allFields get all the queries in the cache
     const allFields = cache.inspectFields(entityKey);
+    //filters out all the queries that do not match the fieldName
+    //in this function the filter method returns posts
     const fieldInfos = allFields.filter((info) => info.fieldName === fieldName);
+    //returns undefined if there are no posts
     const size = fieldInfos.length;
     if (size === 0) {
       return undefined;
     }
+    //fieldsArgs is the data we pass into the posts query ex: {cursor: '1644599009000', limit: 15}
+    // fieldKey ex: posts({"cursor":"1644599009000","limit":15})
+    // the cache.resolve() method allows us to access Graphcache's cached data directly. It is used to resolve records or links on any given entity and accepts three arguments:
+    //entity: This is the entity on which we'd like to access a field.
+    //fieldName: This is the field's name we'd like to access.
+    //fieldArgs: Optionally, as the third argument we may pass the field's arguments
     const fieldKey = `${fieldName}(${stringifyVariables(fieldArgs)})`;
+    //checks to see if there are post in the cache
     const isItInTheCache = cache.resolve(
       cache.resolve(entityKey, fieldKey) as string,
       'posts'
     );
+    console.log(isItInTheCache);
+    //if info.partial is true it tells there server that we got partial data from the cache and the client fetches more data
     info.partial = !isItInTheCache;
+    //hasMore is used to determine if there are more post that have not been displayed
     let hasMore = true;
     const results: string[] = [];
     fieldInfos.forEach((fi) => {
@@ -59,58 +74,6 @@ export const cursorPagination = (): Resolver => {
     });
 
     return { __typename: 'PaginatedPosts', hasMore, posts: results };
-
-    // const visited = new Set();
-    // let result: NullArray<string> = [];
-    // let prevOffset: number | null = null;
-
-    // for (let i = 0; i < size; i++) {
-    //   const { fieldKey, arguments: args } = fieldInfos[i];
-    //   if (args === null || !compareArgs(fieldArgs, args)) {
-    //     continue;
-    //   }
-
-    //   const links = cache.resolve(entityKey, fieldKey) as string[];
-    //   const currentOffset = args[offsetArgument];
-
-    //   if (
-    //     links === null ||
-    //     links.length === 0 ||
-    //     typeof currentOffset !== 'number'
-    //   ) {
-    //     continue;
-    //   }
-
-    //   const tempResult: NullArray<string> = [];
-
-    //   for (let j = 0; j < links.length; j++) {
-    //     const link = links[j];
-    //     if (visited.has(link)) continue;
-    //     tempResult.push(link);
-    //     visited.add(link);
-    //   }
-
-    //   if (
-    //     (!prevOffset || currentOffset > prevOffset) ===
-    //     (mergeMode === 'after')
-    //   ) {
-    //     result = [...result, ...tempResult];
-    //   } else {
-    //     result = [...tempResult, ...result];
-    //   }
-
-    //   prevOffset = currentOffset;
-    // }
-
-    // const hasCurrentPage = cache.resolve(entityKey, fieldName, fieldArgs);
-    // if (hasCurrentPage) {
-    //   return result;
-    // } else if (!(info as any).store.schema) {
-    //   return undefined;
-    // } else {
-    //   info.partial = true;
-    //   return result;
-    // }
   };
 };
 
@@ -128,10 +91,11 @@ export const createUrqlClient = (ssrExchange: any) => ({
     //
     dedupExchange,
     cacheExchange({
+      //tells the urql client that PaginatedPosts does not have an ID
       keys: {
         PaginatedPosts: () => null,
       },
-      //resolvers adds clients side resolves that can be ran
+      //adds client side resolvers that can run computed values whenever the query is run
       resolvers: {
         Query: {
           posts: cursorPagination(),
@@ -139,6 +103,8 @@ export const createUrqlClient = (ssrExchange: any) => ({
       },
       updates: {
         Mutation: {
+          //when the createPost mutation is called it is removing all the post query arguments from the cache forcing the server to refetch the data
+          //I performed this action so the user can automatically see their new post at the top of the list
           createPost: (_result, args, cache, info) => {
             const allFields = cache.inspectFields('Query');
             const fieldInfos = allFields.filter(

@@ -10,7 +10,10 @@ import {
 } from 'typeorm';
 import { Post } from './Post';
 import { Updoot } from './Updoot';
-
+//one to many relationship
+//one user can do many upvote/downvotes
+//one user can create many posts
+//ObjectType() exposes all the fields of the User through graphQl
 @ObjectType()
 @Entity()
 export class User extends BaseEntity {

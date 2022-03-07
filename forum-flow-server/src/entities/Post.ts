@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 import { Updoot } from './Updoot';
 import { User } from './User';
-
+//ObjectType() exposes all the fields of the Post through graphQl
 @ObjectType()
 @Entity()
 export class Post extends BaseEntity {
