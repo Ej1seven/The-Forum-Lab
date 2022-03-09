@@ -54,7 +54,7 @@ export class PostResolver {
     const isUpdoot = value !== -1;
     const realValue = isUpdoot ? 1 : -1;
     const { userId } = req.session;
-
+    //checks to see if the user has already voted on the post by finding the postId then checking to see if the user's id is attached
     const updoot = await Updoot.findOne({ where: { postId, userId } });
     //the user has voted on the post before
     //and they are changing their vote
@@ -64,8 +64,16 @@ export class PostResolver {
           //this transaction inserts the "userId", "postId", and value into the updoot table
           `update updoot
         set value = $1
-        where "postId = $2 and "userId" = $3`,
-          [userId, postId, realValue]
+        where "postId" = $2 and "userId" = $3`,
+          [realValue, postId, userId]
+        );
+        //if the user changes their vote it either adds or subtracts by two to prevent the value from being 0
+        await tm.query(
+          `update post
+        set points = points + $1
+        where _id = $2
+        `,
+          [2 * realValue, postId]
         );
       });
     } else if (!updoot) {
@@ -74,7 +82,7 @@ export class PostResolver {
         await tm.query(
           //this transaction inserts the "userId", "postId", and value into the updoot table
           `insert into updoot ("userId", "postId", value)
-        values ($1, $2, $3})`,
+        values ($1, $2, $3)`,
           [userId, postId, realValue]
         );
         await tm.query(
@@ -86,13 +94,6 @@ export class PostResolver {
         );
       });
     }
-
-    // await Updoot.insert({
-    //   userId,
-    //   postId,
-    //   value: realValue,
-    // });
-
     return true;
   }
   //this query returns all the posts from the Post table in a array
@@ -104,6 +105,7 @@ export class PostResolver {
     //'limit' set the limit for the amount of post that can be viewed on the webpage
     @Arg('limit', () => Int) limit: number,
     @Arg('cursor', () => String, { nullable: true }) cursor: string | null
+    @Ctx() {req}: MyContext
   ): Promise<PaginatedPosts> {
     //set the limit for the amount of post that can be viewed
     //the limit is set to a max of 50
@@ -111,9 +113,16 @@ export class PostResolver {
     const realLimitPlusOne = realLimit + 1;
 
     const replacements: any[] = [realLimitPlusOne];
+
+
+    if (req.session.userId) {
+      replacements.push(req.session.userId)
+    }
+    let cursorIdx = '3';
     //if the cursor is true then it replaces the current cursor with a new cursor date
     if (cursor) {
       replacements.push(new Date(parseInt(cursor)));
+      cursorIdx = replacements.length;
     }
     //the posts querybuilder creates an creator object on the POST table and joins it with the User table by comparing the userID to the creatorId columns
     //if the cursor is true then the createdAt field on the post is replaced with the new date
@@ -122,10 +131,13 @@ export class PostResolver {
     const posts = await getConnection().query(
       `
     select p.*,
-    json_build_object('_id', u._id,'username', u.username, 'email', u.email, 'createdAt', u."createdAt", 'updatedAt', u."updatedAt") creator
+    json_build_object('_id', u._id,'username', u.username, 'email', u.email, 'createdAt', u."createdAt", 'updatedAt', u."updatedAt") creator,
+    ${
+      req.session.userId ? '(select value from updoot where "userId" = $2 and "postId" = p._id) "voteStatus"' : 'null as "voteStatus"'
+    }
     from post p
     inner join public.user u on u._id = p."creatorId"
-    ${cursor ? `where p."createdAt" < $2` : ''}
+    ${cursor ? `where p."createdAt" < $${cursorIdx}` : ""}
     order by p."createdAt" DESC
     limit $1
     `,

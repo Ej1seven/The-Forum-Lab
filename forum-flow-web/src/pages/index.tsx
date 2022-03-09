@@ -15,6 +15,8 @@ import {
 import NextLink from 'next/link';
 import { useState } from 'react';
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
+//the UpdootSection represents the upvote/downvote arrows to the right of the post
+//The UpdootSection also contains the current point value for that post
 import { UpdootSection } from '../components/UpdootSection';
 
 const Index = () => {

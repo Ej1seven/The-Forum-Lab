@@ -5,13 +5,16 @@ import {
   MeDocument,
   LoginMutation,
   RegisterMutation,
+  VoteMutationVariables,
 } from '../generated/graphql';
 import { betterUpdateQuery } from './betterUpdateQuery';
 import { cacheExchange, Resolver } from '@urql/exchange-graphcache';
 import { Exchange } from 'urql';
 import { pipe, tap } from 'wonka';
 import Router from 'next/router';
+import { gql } from '@urql/core';
 import { resourceLimits } from 'worker_threads';
+import { isServer } from './isServer';
 
 //handle all errors. Allow global error handling
 //everytime there is an error in the application it refers to the errorExchange function
@@ -78,105 +81,146 @@ export const cursorPagination = (): Resolver => {
 };
 
 //creates the GraphQL client which connects to the GraphQl server to query the database
-export const createUrqlClient = (ssrExchange: any) => ({
-  url: 'http://localhost:4000/graphql',
-  fetchOptions: {
-    credentials: 'include' as const,
-  },
-  //the default cacheExchange in urql offers a "Document Cache", which is usually enough for sites that heavily rely on static content. However as an app grows more complex it's likely that the data and state that urql manages, will also grow more complex and introduce interdependencies between data.
-  //To solve this problem most GraphQL clients resort to caching data in a normalized format
+export const createUrqlClient = (ssrExchange: any, ctx: any) => {
+  let cookie = '';
+  if (isServer()) {
+    cookie = ctx.req.headers.cookie;
+  }
+  return {
+    url: 'http://localhost:4000/graphql',
+    fetchOptions: {
+      credentials: 'include' as const,
+      headers: cookie
+        ? {
+            cookie,
+          }
+        : undefined,
+    },
+    //the default cacheExchange in urql offers a "Document Cache", which is usually enough for sites that heavily rely on static content. However as an app grows more complex it's likely that the data and state that urql manages, will also grow more complex and introduce interdependencies between data.
+    //To solve this problem most GraphQL clients resort to caching data in a normalized format
 
-  //exchanges are user to configure the cache into a normalized format
-  exchanges: [
-    //
-    dedupExchange,
-    cacheExchange({
-      //tells the urql client that PaginatedPosts does not have an ID
-      keys: {
-        PaginatedPosts: () => null,
-      },
-      //adds client side resolvers that can run computed values whenever the query is run
-      resolvers: {
-        Query: {
-          posts: cursorPagination(),
+    //exchanges are user to configure the cache into a normalized format
+    exchanges: [
+      //
+      dedupExchange,
+      cacheExchange({
+        //tells the urql client that PaginatedPosts does not have an ID
+        keys: {
+          PaginatedPosts: () => null,
         },
-      },
-      updates: {
-        Mutation: {
-          //when the createPost mutation is called it is removing all the post query arguments from the cache forcing the server to refetch the data
-          //I performed this action so the user can automatically see their new post at the top of the list
-          createPost: (_result, args, cache, info) => {
-            const allFields = cache.inspectFields('Query');
-            const fieldInfos = allFields.filter(
-              (info) => info.fieldName === 'posts'
-            );
-            fieldInfos.forEach((fi) => {
-              cache.invalidate('Query', 'posts', fi.arguments || {});
-            });
-          },
-          logout: (_result, args, cache, info) => {
-            //when the LogoutMutation is ran the _id/username will be removed from the MeQuery and the user will be logged out
-            betterUpdateQuery<LogoutMutation, MeQuery>(
-              // The cache instance, which gives us access to methods allowing us to interact with the local cache.
-              cache,
-              //the input provided to the MeQuery i.e(_id, username)
-              //this information will be updated after the function is ran
-              { query: MeDocument },
-              //The full API result that's being written to the cache
-              _result,
-              //the me property in the MeQuery will be set up null
-              //this event will caused the user to be logged out
-              () => ({ me: null })
-            );
-          },
-          //if the user successfully logs in, the MeQuery will be updated with the user's id and username
-          login: (_result, args, cache, info) => {
-            betterUpdateQuery<LoginMutation, MeQuery>(
-              cache,
-              {
-                query: MeDocument,
-              },
-              _result,
-              (result, query) => {
-                //if the user does not successfully login the MeQuery will remain blank otherwise the MeQuery will be provided with the
-                //_id and username
-                if (result.login.errors) {
-                  return query;
-                } else {
-                  return {
-                    me: result.login.user,
-                  };
-                }
-              }
-            );
-            // ...
-          },
-          //if the user does not successfully register, the MeQuery will remain blank otherwise the MeQuery will be provided with the
-          //_id and username
-          register: (_result, args, cache, info) => {
-            betterUpdateQuery<RegisterMutation, MeQuery>(
-              cache,
-              {
-                query: MeDocument,
-              },
-              _result,
-              (result, query) => {
-                if (result.register.errors) {
-                  return query;
-                } else {
-                  return {
-                    me: result.register.user,
-                  };
-                }
-              }
-            );
-            // ...
+        //adds client side resolvers that can run computed values whenever the query is run
+        resolvers: {
+          Query: {
+            posts: cursorPagination(),
           },
         },
-      },
-    }),
-    errorExchange,
-    ssrExchange,
-    fetchExchange,
-  ],
-});
+        updates: {
+          Mutation: {
+            vote: (_result, args, cache, info) => {
+              const { postId, value } = args as VoteMutationVariables;
+              const data = cache.readFragment(
+                gql`
+                  fragment _ on Post {
+                    _id
+                    points
+                    voteStatus
+                  }
+                `,
+                { _id: postId } as any // this identifies the fragment (User) entity
+              );
+              console.log('data:', data);
+              if (data) {
+                if (data.voteStatus === value) {
+                  return;
+                }
+                const newPoints =
+                  (data.points as number) + (!data.voteStatus ? 1 : 2) * value;
+                cache.writeFragment(
+                  gql`
+                    fragment __ on Post {
+                      points
+                      voteStatus
+                    }
+                  `,
+                  { _id: postId, points: newPoints, voteStatus: value } as any
+                );
+              }
+            },
+            //when the createPost mutation is called it is removing all the post query arguments from the cache by invalidating the arguments forcing the server to refetch the data
+            //I performed this action so the user can automatically see their new post at the top of the list
+            createPost: (_result, args, cache, info) => {
+              const allFields = cache.inspectFields('Query');
+              const fieldInfos = allFields.filter(
+                (info) => info.fieldName === 'posts'
+              );
+              fieldInfos.forEach((fi) => {
+                cache.invalidate('Query', 'posts', fi.arguments || {});
+              });
+            },
+            logout: (_result, args, cache, info) => {
+              //when the LogoutMutation is ran the _id/username will be removed from the MeQuery and the user will be logged out
+              betterUpdateQuery<LogoutMutation, MeQuery>(
+                // The cache instance, which gives us access to methods allowing us to interact with the local cache.
+                cache,
+                //the input provided to the MeQuery i.e(_id, username)
+                //this information will be updated after the function is ran
+                { query: MeDocument },
+                //The full API result that's being written to the cache
+                _result,
+                //the me property in the MeQuery will be set up null
+                //this event will caused the user to be logged out
+                () => ({ me: null })
+              );
+            },
+            //if the user successfully logs in, the MeQuery will be updated with the user's id and username
+            login: (_result, args, cache, info) => {
+              betterUpdateQuery<LoginMutation, MeQuery>(
+                cache,
+                {
+                  query: MeDocument,
+                },
+                _result,
+                (result, query) => {
+                  //if the user does not successfully login the MeQuery will remain blank otherwise the MeQuery will be provided with the
+                  //_id and username
+                  if (result.login.errors) {
+                    return query;
+                  } else {
+                    return {
+                      me: result.login.user,
+                    };
+                  }
+                }
+              );
+              // ...
+            },
+            //if the user does not successfully register, the MeQuery will remain blank otherwise the MeQuery will be provided with the
+            //_id and username
+            register: (_result, args, cache, info) => {
+              betterUpdateQuery<RegisterMutation, MeQuery>(
+                cache,
+                {
+                  query: MeDocument,
+                },
+                _result,
+                (result, query) => {
+                  if (result.register.errors) {
+                    return query;
+                  } else {
+                    return {
+                      me: result.register.user,
+                    };
+                  }
+                }
+              );
+              // ...
+            },
+          },
+        },
+      }),
+      errorExchange,
+      ssrExchange,
+      fetchExchange,
+    ],
+  };
+};
