@@ -155,7 +155,7 @@ export class UserResolver {
     }
     //argon2.hash is used to hash the password provided but the user.
     const hashedPassword = await argon2.hash(options.password);
-    let user;
+    let user: any;
     try {
       //result creates a new user
       const result = await User.create({

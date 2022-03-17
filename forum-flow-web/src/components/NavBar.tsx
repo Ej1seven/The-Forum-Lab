@@ -1,4 +1,4 @@
-import { Box, Button, Flex, Link } from '@chakra-ui/react';
+import { Box, Button, Flex, Heading, Link } from '@chakra-ui/react';
 import React from 'react';
 import NextLink from 'next/link';
 import {
@@ -7,10 +7,12 @@ import {
   useMeQuery,
 } from '../generated/graphql';
 import { isServer } from '../utils/isServer';
+import { useRouter } from 'next/router';
 
 interface NavBarProps {}
 
 export const NavBar: React.FC<NavBarProps> = ({}) => {
+  const router = useRouter();
   //The first index I renamed the fetching property to logoutFetching and it is used to display progress on the mutation - (not async)
   //the second index we named logout and it is meant to run after the mutation has completed. - (async)
   const [{ fetching: logoutFetching }, logout] = useLogoutMutation();
@@ -37,11 +39,17 @@ export const NavBar: React.FC<NavBarProps> = ({}) => {
     //user is logged in
   } else {
     body = (
-      <Flex>
+      <Flex align="center">
+        <NextLink href="create-post">
+          <Button as={Link} mr={4}>
+            create post
+          </Button>
+        </NextLink>
         <Box mr={2}>{data.me.username}</Box>
         <Button
-          onClick={() => {
-            logout();
+          onClick={async () => {
+            await logout();
+            router.reload();
           }}
           variant="link"
           isLoading={logoutFetching}
@@ -53,7 +61,14 @@ export const NavBar: React.FC<NavBarProps> = ({}) => {
   }
   return (
     <Flex zIndex={1} bg="tan" p={4} position="sticky" top={0}>
-      <Box ml={'auto'}>{body}</Box>
+      <Flex flex={1} m="auto" maxW={800} align="center">
+        <NextLink href="/">
+          <Link>
+            <Heading>The Forum Finder</Heading>
+          </Link>
+        </NextLink>
+        <Box ml={'auto'}>{body}</Box>
+      </Flex>
     </Flex>
   );
 };

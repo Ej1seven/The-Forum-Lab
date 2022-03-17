@@ -6,9 +6,10 @@ import {
   LoginMutation,
   RegisterMutation,
   VoteMutationVariables,
+  DeletePostMutationVariables,
 } from '../generated/graphql';
 import { betterUpdateQuery } from './betterUpdateQuery';
-import { cacheExchange, Resolver } from '@urql/exchange-graphcache';
+import { cacheExchange, Resolver, Cache } from '@urql/exchange-graphcache';
 import { Exchange } from 'urql';
 import { pipe, tap } from 'wonka';
 import Router from 'next/router';
@@ -80,16 +81,27 @@ export const cursorPagination = (): Resolver => {
   };
 };
 
+function invalidateAllPost(cache: Cache) {
+  const allFields = cache.inspectFields('Query');
+  const fieldInfos = allFields.filter((info) => info.fieldName === 'posts');
+  fieldInfos.forEach((fi) => {
+    cache.invalidate('Query', 'posts', fi.arguments || {});
+  });
+}
+
 //creates the GraphQL client which connects to the GraphQl server to query the database
 export const createUrqlClient = (ssrExchange: any, ctx: any) => {
   let cookie = '';
+  //if the server has a cookie then add the value to the cookie variable
   if (isServer()) {
-    cookie = ctx.req.headers.cookie;
+    cookie = ctx?.req?.headers?.cookie;
   }
   return {
     url: 'http://localhost:4000/graphql',
     fetchOptions: {
       credentials: 'include' as const,
+      //if the request header has a cookie then it adds the cookie to the header
+      //this allows the server to send a cookie to the browser
       headers: cookie
         ? {
             cookie,
@@ -116,8 +128,17 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
         },
         updates: {
           Mutation: {
+            //when the user deletes a post the cache is updated automatically so the user does not have to refresh the page in order to see that their post has been deleted
+            deletePost: (_result, args, cache, info) => {
+              cache.invalidate({
+                __typename: 'Post',
+                _id: (args as DeletePostMutationVariables).id,
+              });
+            },
             vote: (_result, args, cache, info) => {
               const { postId, value } = args as VoteMutationVariables;
+              //readFragment gets the current _id, points and voteStatus of the selected post from the Post entity
+              //voteStatus tells the server if the user has upvoted/downvoted on the post before
               const data = cache.readFragment(
                 gql`
                   fragment _ on Post {
@@ -126,15 +147,20 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
                     voteStatus
                   }
                 `,
-                { _id: postId } as any // this identifies the fragment (User) entity
+                { _id: postId } as any // this identifies the fragment (Post) entity
               );
               console.log('data:', data);
+
               if (data) {
                 if (data.voteStatus === value) {
                   return;
                 }
+                //the new number of the points for the selected post
                 const newPoints =
+                  //if the user has already voted the post then 2 points will be added to post to prevent the post from going back to 0, otherwise if the user has not already voted then only one point is added
                   (data.points as number) + (!data.voteStatus ? 1 : 2) * value;
+                //the writeFragment adds points to the selected post from the Post entity
+                //the voteStatus also gets updated with either a 1 for upvote or -1 for downvote
                 cache.writeFragment(
                   gql`
                     fragment __ on Post {
@@ -149,13 +175,7 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
             //when the createPost mutation is called it is removing all the post query arguments from the cache by invalidating the arguments forcing the server to refetch the data
             //I performed this action so the user can automatically see their new post at the top of the list
             createPost: (_result, args, cache, info) => {
-              const allFields = cache.inspectFields('Query');
-              const fieldInfos = allFields.filter(
-                (info) => info.fieldName === 'posts'
-              );
-              fieldInfos.forEach((fi) => {
-                cache.invalidate('Query', 'posts', fi.arguments || {});
-              });
+              invalidateAllPost(cache);
             },
             logout: (_result, args, cache, info) => {
               //when the LogoutMutation is ran the _id/username will be removed from the MeQuery and the user will be logged out
@@ -192,6 +212,7 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
                   }
                 }
               );
+              invalidateAllPost(cache);
               // ...
             },
             //if the user does not successfully register, the MeQuery will remain blank otherwise the MeQuery will be provided with the

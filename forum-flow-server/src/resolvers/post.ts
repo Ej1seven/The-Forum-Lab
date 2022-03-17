@@ -17,6 +17,7 @@ import { MyContext } from 'src/types';
 import { isAuth } from '../middleware/isAuth';
 import { getConnection } from 'typeorm';
 import { Updoot } from '../entities/Updoot';
+import { User } from '../entities/User';
 
 @InputType()
 class PostInput {
@@ -42,6 +43,27 @@ export class PostResolver {
   //the textSnippet() will be returned every time the client request a Post object
   textSnippet(@Root() root: Post) {
     return root.text.slice(0, 50);
+  }
+  //anytime a post is requested the server will also fetch the creator by matching the userId with the creatorId
+  @FieldResolver(() => User)
+  creator(@Root() post: Post, @Ctx() { userLoader }: MyContext) {
+    return userLoader.load(post.creatorId);
+  }
+
+  @FieldResolver(() => Int, { nullable: true })
+  async voteStatus(
+    @Root() post: Post,
+    @Ctx() { updootLoader, req }: MyContext
+  ) {
+    if (!req.session.userId) {
+      return null;
+    }
+
+    const updoot = await updootLoader.load({
+      postId: post._id,
+      userId: req.session.userId,
+    });
+    return updoot ? updoot.value : null;
   }
   //this query adds an up vote or down vote to the selected post
   @Mutation(() => Boolean)
@@ -105,7 +127,6 @@ export class PostResolver {
     //'limit' set the limit for the amount of post that can be viewed on the webpage
     @Arg('limit', () => Int) limit: number,
     @Arg('cursor', () => String, { nullable: true }) cursor: string | null
-    @Ctx() {req}: MyContext
   ): Promise<PaginatedPosts> {
     //set the limit for the amount of post that can be viewed
     //the limit is set to a max of 50
@@ -114,30 +135,22 @@ export class PostResolver {
 
     const replacements: any[] = [realLimitPlusOne];
 
-
-    if (req.session.userId) {
-      replacements.push(req.session.userId)
-    }
-    let cursorIdx = '3';
-    //if the cursor is true then it replaces the current cursor with a new cursor date
+    //the cursor toggles between 2 and 3 depending on if the user is logged in when they click the load more button
+    //if the user is logged in when they push the load more button then the cursor will be 3
+    //if the user is not logged in when they select the load more button the cursor will be 2
     if (cursor) {
       replacements.push(new Date(parseInt(cursor)));
-      cursorIdx = replacements.length;
     }
     //the posts querybuilder creates an creator object on the POST table and joins it with the User table by comparing the userID to the creatorId columns
-    //if the cursor is true then the createdAt field on the post is replaced with the new date
+    //the server then checks to see if the user is logged in, if they are then the server checks to see if the user has already voted on the post. If the user has already voteStatus returns 1 or -1 depending on if they selected upvote(1) or downvote(-1), otherwise the voteStatus remains null
+    //if the cursor is true then the createdAt field on the post replaces the cursor with the new date
     //the posts are displayed in descending order from newest post to oldest post
     //limit is set to realLimitPlusOne
     const posts = await getConnection().query(
       `
-    select p.*,
-    json_build_object('_id', u._id,'username', u.username, 'email', u.email, 'createdAt', u."createdAt", 'updatedAt', u."updatedAt") creator,
-    ${
-      req.session.userId ? '(select value from updoot where "userId" = $2 and "postId" = p._id) "voteStatus"' : 'null as "voteStatus"'
-    }
+    select p.*
     from post p
-    inner join public.user u on u._id = p."creatorId"
-    ${cursor ? `where p."createdAt" < $${cursorIdx}` : ""}
+    ${cursor ? `where p."createdAt" < $2` : ''}
     order by p."createdAt" DESC
     limit $1
     `,
@@ -153,7 +166,7 @@ export class PostResolver {
   @Query(() => Post, { nullable: true })
   //Uses the @Arg function from graphql to receive the id parameter
   //the post function matches the id parameter with the matching id in the Post table
-  post(@Arg('id') _id: number): Promise<Post | undefined> {
+  post(@Arg('_id', () => Int) _id: number): Promise<Post | undefined> {
     return Post.findOne(_id);
   }
   //Mutation is used to create, delete or update data in the database
@@ -170,29 +183,42 @@ export class PostResolver {
       creatorId: req.session.userId,
     }).save();
   }
-  //this mutation updates the post by finding the post that matches the id parameter then checking if the title field is blank.
-  //if the title field is not blank then the title is updated.
-  //if none of the post match the id parameter then the updatePost mutation returns null
+  //this mutation updates the post by finding the post that matches the id parameter and making sure the creatorId matches the userId .
+  //the post is updated with the title and text arguments
+  //then the entire post is returned using the result.raw[0]
   @Mutation(() => Post, { nullable: true })
+  @UseMiddleware(isAuth)
   async updatePost(
-    @Arg('id') _id: number,
-    @Arg('title', () => String, { nullable: true }) title: string
+    @Arg('id', () => Int) _id: number,
+    @Arg('title') title: string,
+    @Arg('text') text: string,
+    @Ctx() { req }: MyContext
   ): Promise<Post | null> {
-    const post = await Post.findOne(_id);
-    if (!post) {
-      return null;
-    }
-    if (typeof title !== 'undefined') {
-      await Post.update({ _id }, { title });
-    }
-    return post;
+    const result = await getConnection()
+      .createQueryBuilder()
+      .update(Post)
+      .set({ title, text })
+      .where('_id = :_id and "creatorId" = :creatorId', {
+        _id,
+        creatorId: req.session.userId,
+      })
+      .returning('*')
+      .execute();
+    console.log('result: ', result);
+    return result.raw[0];
   }
   //this mutation deletes the post by finding the post that matches the id parameter
   //if the post is successfully deleted then the deletePost mutation return true otherwise
   //mutation returns false
+  //the user must be logged in order to delete post
   @Mutation(() => Boolean)
-  async deletePost(@Arg('id') _id: number): Promise<boolean> {
-    Post.delete(_id);
+  @UseMiddleware(isAuth)
+  async deletePost(
+    @Arg('id', () => Int) _id: number,
+    @Ctx() { req }: MyContext
+  ): Promise<boolean> {
+    //the Post.delete function makes sure the user can only delete their own post
+    await Post.delete({ _id, creatorId: req.session.userId });
     return true;
   }
 }

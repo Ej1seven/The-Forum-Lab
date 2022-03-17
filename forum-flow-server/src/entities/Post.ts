@@ -31,8 +31,9 @@ export class Post extends BaseEntity {
   @Column({ type: 'int', default: 0 })
   points!: number;
 
+  //tells the server is the user has up voted/ down voted on the post before
   @Field(() => Int, { nullable: true })
-  voteStatus: number | null;
+  voteStatus: number | null; // 1 or -1 or null
 
   @Field()
   @Column()

@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require("reflect-metadata");
+require("dotenv-safe/config");
 const express_1 = __importDefault(require("express"));
 const apollo_server_express_1 = require("apollo-server-express");
 const type_graphql_1 = require("type-graphql");
@@ -19,13 +20,15 @@ const Post_1 = require("./entities/Post");
 const User_1 = require("./entities/User");
 const path_1 = __importDefault(require("path"));
 const Updoot_1 = require("./entities/Updoot");
+const createUserLoader_1 = require("./utils/createUserLoader");
+const createUpdootLoader_1 = require("./utils/createUpdootLoader");
 const main = async () => {
     const conn = await (0, typeorm_1.createConnection)({
         type: 'postgres',
-        host: '35.225.193.0',
-        database: 'forum-finder',
-        username: 'erikhunter',
-        password: 'dowatudo17',
+        host: process.env.HOST,
+        database: process.env.DATABASE,
+        username: process.env.DB_USERNAME,
+        password: process.env.DB_PASSWORD,
         logging: true,
         synchronize: true,
         migrations: [path_1.default.join(__dirname, './migrations/*')],
@@ -41,7 +44,7 @@ const main = async () => {
         origin: 'http://localhost:3000',
         credentials: true,
     }));
-    const redis = new ioredis_1.default(6379, '35.225.193.0');
+    const redis = new ioredis_1.default(process.env.REDIS, process.env.HOST);
     const session = require('express-session');
     let RedisStore = require('connect-redis')(session);
     redis.on('error', function (error) {
@@ -68,7 +71,13 @@ const main = async () => {
             resolvers: [hello_1.HelloResolver, post_1.PostResolver, user_1.UserResolver],
             validate: false,
         }),
-        context: ({ req, res }) => ({ req, res, redis }),
+        context: ({ req, res }) => ({
+            req,
+            res,
+            redis,
+            userLoader: (0, createUserLoader_1.createUserLoader)(),
+            updootLoader: (0, createUpdootLoader_1.createUpdootLoader)(),
+        }),
         plugins: [
             (0, apollo_server_core_1.ApolloServerPluginLandingPageGraphQLPlayground)({
                 settings: { 'request.credentials': 'include' },
@@ -80,7 +89,7 @@ const main = async () => {
         app,
         cors: false,
     });
-    app.listen(4000, () => {
+    app.listen(process.env.PORT, () => {
         console.log('server started on localhost:4000');
     });
 };

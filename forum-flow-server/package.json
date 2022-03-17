@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "tsc",
     "watch": "tsc -w",
     "dev": "nodemon dist/index.js",
     "start": "node dist/index.js",
@@ -26,7 +27,9 @@
     "argon2": "^0.28.4",
     "connect-redis": "^6.1.1",
     "cors": "^2.8.5",
+    "dataloader": "^2.0.0",
     "dotenv": "^16.0.0",
+    "dotenv-safe": "^8.2.0",
     "express-session": "^1.17.2",
     "graphql": "^15.7.2",
     "ioredis": "^4.28.5",

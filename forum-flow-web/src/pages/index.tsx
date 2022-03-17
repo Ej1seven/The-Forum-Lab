@@ -1,23 +1,22 @@
-import { withUrqlClient } from 'next-urql';
-import { createUrqlClient } from '../utils/createUrqlClient';
-import { usePostsQuery } from '../generated/graphql';
-import { Layout } from '../components/Layout';
 import {
   Box,
   Button,
   Flex,
   Heading,
-  IconButton,
   Link,
   Stack,
   Text,
 } from '@chakra-ui/react';
+import { withUrqlClient } from 'next-urql';
 import NextLink from 'next/link';
 import { useState } from 'react';
-import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
+import { EditDeletePostButtons } from '../components/EditDeletePostButtons';
+import { Layout } from '../components/Layout';
 //the UpdootSection represents the upvote/downvote arrows to the right of the post
 //The UpdootSection also contains the current point value for that post
 import { UpdootSection } from '../components/UpdootSection';
+import { usePostsQuery } from '../generated/graphql';
+import { createUrqlClient } from '../utils/createUrqlClient';
 
 const Index = () => {
   //Pagination is used to page through the post
@@ -29,12 +28,18 @@ const Index = () => {
     cursor: null as string | null,
   });
   //the usePostsQuery displays all the post
-  const [{ data, fetching }] = usePostsQuery({
+  const [{ data, error, fetching }] = usePostsQuery({
     variables,
   });
+
   //if urql is not fetching data and the data returns false then the index page with display the text below
   if (!fetching && !data) {
-    return <div>The query failed for some reason</div>;
+    return (
+      <div>
+        <div>The query failed for some reason</div>
+        <div>{error?.message}</div>
+      </div>
+    );
   }
   //if urql is fetching the post then the page will display loading
   //otherwise we map through the post displaying the title, creator username, and text snippet for each post
@@ -42,28 +47,36 @@ const Index = () => {
   //otherwise once all the post are displayed the load more button disappears
   return (
     <Layout>
-      <Flex align="center">
-        <Heading>The Forum Finder</Heading>
-        <NextLink href="create-post">
-          <Link ml="auto">create post</Link>
-        </NextLink>
-      </Flex>
-
-      <br />
       {fetching && !data ? (
         <div>loading...</div>
       ) : (
         <Stack spacing={8}>
-          {data!.posts.posts.map((p) => (
-            <Flex p={5} key={p._id} shadow="md" borderWidth="1px">
-              <UpdootSection post={p} />
-              <Box>
-                <Heading fontSize="xl">{p.title}</Heading>
-                <Text>posted by {p.creator.username}</Text>
-                <Text mt={4}>{p.textSnippet}</Text>
-              </Box>
-            </Flex>
-          ))}
+          {data!.posts.posts.map((p) =>
+            !p ? null : (
+              <Flex p={5} key={p._id} shadow="md" borderWidth="1px">
+                <UpdootSection post={p} />
+                <Box flex={1}>
+                  <NextLink href="/post/[id]" as={`/post/${p._id}`}>
+                    <Link>
+                      <Heading fontSize="xl">{p.title}</Heading>
+                    </Link>
+                  </NextLink>
+                  <Text>posted by {p.creator.username}</Text>
+                  <Flex align="center">
+                    <Text mt={4} flex={1}>
+                      {p.textSnippet}
+                    </Text>
+                    <Box ml="auto">
+                      <EditDeletePostButtons
+                        creatorId={p.creator._id}
+                        id={p._id}
+                      />
+                    </Box>
+                  </Flex>
+                </Box>
+              </Flex>
+            )
+          )}
         </Stack>
       )}
       {data && data.posts.hasMore ? (
