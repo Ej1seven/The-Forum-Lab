@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require("reflect-metadata");
-require("dotenv-safe/config");
+require("dotenv/config");
 const express_1 = __importDefault(require("express"));
 const apollo_server_express_1 = require("apollo-server-express");
 const type_graphql_1 = require("type-graphql");
@@ -25,26 +25,20 @@ const createUpdootLoader_1 = require("./utils/createUpdootLoader");
 const main = async () => {
     const conn = await (0, typeorm_1.createConnection)({
         type: 'postgres',
-        host: process.env.HOST,
-        database: process.env.DATABASE,
-        username: process.env.DB_USERNAME,
-        password: process.env.DB_PASSWORD,
+        url: process.env.DATABASE_URL,
         logging: true,
         synchronize: true,
         migrations: [path_1.default.join(__dirname, './migrations/*')],
         entities: [Post_1.Post, User_1.User, Updoot_1.Updoot],
-        ssl: {
-            rejectUnauthorized: false,
-        },
     });
     await conn.runMigrations();
     const app = (0, express_1.default)();
     app.set('trust proxy', 1);
     app.use((0, cors_1.default)({
-        origin: 'http://localhost:3000',
+        origin: process.env.CORS_ORIGIN,
         credentials: true,
     }));
-    const redis = new ioredis_1.default(process.env.REDIS, process.env.HOST);
+    const redis = new ioredis_1.default(process.env.REDIS_URL);
     const session = require('express-session');
     let RedisStore = require('connect-redis')(session);
     redis.on('error', function (error) {

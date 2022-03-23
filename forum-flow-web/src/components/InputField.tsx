@@ -22,7 +22,7 @@ export const InputField: React.FC<InputFieldProps> = ({
 }) => {
   let InputOrTextarea = Input;
   if (textarea) {
-    InputOrTextarea = Textarea;
+    InputOrTextarea = Textarea as any;
   }
   //the useField hook from formik passes all the InputField props to the form label and input fields
   //the error object is used when there is a error in the input field.

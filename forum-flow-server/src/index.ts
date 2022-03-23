@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import 'dotenv-safe/config';
+import 'dotenv/config';
 //Importing MikroORM - A typescript ORM used to query data from the AWS Postgres database
 //Importing configuration data needed to initialize MikroOrm
 //server framework used to build JSON APIs
@@ -35,17 +35,11 @@ const main = async () => {
   //conn is used to configure my postgres db to connect to TypeOrm
   const conn = await createConnection({
     type: 'postgres',
-    host: process.env.HOST,
-    database: process.env.DATABASE,
-    username: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
+    url: process.env.DATABASE_URL,
     logging: true,
-    synchronize: true,
+    // synchronize: true,
     migrations: [path.join(__dirname, './migrations/*')],
     entities: [Post, User, Updoot],
-    ssl: {
-      rejectUnauthorized: false,
-    },
   });
   await conn.runMigrations();
   //
@@ -58,14 +52,14 @@ const main = async () => {
   //doing this ensures the client and server have matching origins preventing any errors
   app.use(
     cors({
-      origin: 'http://localhost:3000',
+      origin: process.env.CORS_ORIGIN,
       //setting credentials to true allows for cookies to be passed through the http header
       credentials: true,
     })
   );
   //It's an open source tool that runs as a service in the background that allows you to store data in memory for high-performance data retrieval and storage
   //Redis will be used in this application as a cache to store frequently accessed data in memory i.e(sessions).
-  const redis = new Redis(process.env.REDIS, process.env.HOST);
+  const redis = new Redis(process.env.REDIS_URL);
   //When the client makes a login request to the server, the server will create a session and store it on the server-side.
   //When the server responds to the client, it sends a cookie.
   //This cookie will contain the session’s unique id stored on the server, which will now be stored on the client.
@@ -92,7 +86,7 @@ const main = async () => {
         secure: __prod__, // cookie only works in https
       },
       saveUninitialized: false,
-      secret: 'dsdsfdsfdsfksdfjksa',
+      secret: process.env.SESSION_SECRET,
       resave: false,
     })
   );
@@ -124,9 +118,9 @@ const main = async () => {
     //we have already configured cors in the server so there is no need to make cors configurations in apolloServer
     cors: false,
   });
-  //The server listens for traffic on port 4000
+  //The server listens for traffic on designated port
   app.listen(process.env.PORT, () => {
-    console.log('server started on localhost:4000');
+    console.log('The server has started');
   });
 };
 //the async function initializes the server and redis
