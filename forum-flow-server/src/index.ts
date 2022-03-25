@@ -47,16 +47,6 @@ const main = async () => {
 
   const app = express();
 
-  app.set('trust proxy', 1);
-  //tells the server to include the front-end url to the http header on every response
-  //doing this ensures the client and server have matching origins preventing any errors
-  app.use(
-    cors({
-      origin: process.env.CORS_ORIGIN,
-      //setting credentials to true allows for cookies to be passed through the http header
-      credentials: true,
-    })
-  );
   //It's an open source tool that runs as a service in the background that allows you to store data in memory for high-performance data retrieval and storage
   //Redis will be used in this application as a cache to store frequently accessed data in memory i.e(sessions).
   const redis = new Redis(process.env.REDIS_URL);
@@ -74,6 +64,16 @@ const main = async () => {
   redis.on('connect', function () {
     console.log('Redis connecton establised');
   });
+  app.set('trust proxy', 1);
+  //tells the server to include the front-end url to the http header on every response
+  //doing this ensures the client and server have matching origins preventing any errors
+  app.use(
+    cors({
+      origin: process.env.CORS_ORIGIN,
+      //setting credentials to true allows for cookies to be passed through the http header
+      credentials: true,
+    })
+  );
   //Server created a session through Apollo Server
   app.use(
     session({
@@ -84,6 +84,7 @@ const main = async () => {
         httpOnly: true,
         sameSite: 'lax', // csrf
         secure: __prod__, // cookie only works in https
+        domain: __prod__ ? '.theforumlab.com' : undefined,
       },
       saveUninitialized: false,
       secret: process.env.SESSION_SECRET,
@@ -124,4 +125,6 @@ const main = async () => {
   });
 };
 //the async function initializes the server and redis
-main();
+main().catch((err) => {
+  console.error(err);
+});

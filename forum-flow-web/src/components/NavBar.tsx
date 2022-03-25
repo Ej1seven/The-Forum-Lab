@@ -1,4 +1,4 @@
-import { Box, Button, Flex, Heading, Link } from '@chakra-ui/react';
+import { Box, Button, Flex, Heading, Link, Text } from '@chakra-ui/react';
 import React from 'react';
 import NextLink from 'next/link';
 import {
@@ -29,7 +29,7 @@ export const NavBar: React.FC<NavBarProps> = ({}) => {
     body = (
       <>
         <NextLink href="/login">
-          <Link mr={2}>Login</Link>
+          <Link mr={8}>Login</Link>
         </NextLink>
         <NextLink href="/register">
           <Link>Register</Link>
@@ -60,13 +60,26 @@ export const NavBar: React.FC<NavBarProps> = ({}) => {
     );
   }
   return (
-    <Flex zIndex={1} bg="tan" p={4} position="sticky" top={0}>
-      <Flex flex={1} m="auto" maxW={800} align="center">
-        <NextLink href="/">
-          <Link>
-            <Heading>The Forum Finder</Heading>
-          </Link>
-        </NextLink>
+    <Flex
+      zIndex={1}
+      bg="#004E7C"
+      p={4}
+      position="sticky"
+      top={0}
+      className="navigation"
+    >
+      <Flex flex={1} mx="5%" w="80%" align="center">
+        <Box p=".4%" bg="#dce1e3" w="250px">
+          <Box p=".4%" border="2px" borderColor="#b73225" bg="#004E7C">
+            <NextLink href="/">
+              <Link>
+                <Heading size="lg">
+                  <Text align="center"> The Forum Lab</Text>
+                </Heading>
+              </Link>
+            </NextLink>
+          </Box>
+        </Box>
         <Box ml={'auto'}>{body}</Box>
       </Flex>
     </Flex>

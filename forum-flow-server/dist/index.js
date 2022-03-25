@@ -27,17 +27,11 @@ const main = async () => {
         type: 'postgres',
         url: process.env.DATABASE_URL,
         logging: true,
-        synchronize: true,
         migrations: [path_1.default.join(__dirname, './migrations/*')],
         entities: [Post_1.Post, User_1.User, Updoot_1.Updoot],
     });
     await conn.runMigrations();
     const app = (0, express_1.default)();
-    app.set('trust proxy', 1);
-    app.use((0, cors_1.default)({
-        origin: process.env.CORS_ORIGIN,
-        credentials: true,
-    }));
     const redis = new ioredis_1.default(process.env.REDIS_URL);
     const session = require('express-session');
     let RedisStore = require('connect-redis')(session);
@@ -47,6 +41,11 @@ const main = async () => {
     redis.on('connect', function () {
         console.log('Redis connecton establised');
     });
+    app.set('trust proxy', 1);
+    app.use((0, cors_1.default)({
+        origin: process.env.CORS_ORIGIN,
+        credentials: true,
+    }));
     app.use(session({
         name: constants_1.COOKIE_NAME,
         store: new RedisStore({ client: redis, disableTouch: true }),
@@ -55,9 +54,10 @@ const main = async () => {
             httpOnly: true,
             sameSite: 'lax',
             secure: constants_1.__prod__,
+            domain: constants_1.__prod__ ? '.theforumlab.com' : undefined,
         },
         saveUninitialized: false,
-        secret: 'dsdsfdsfdsfksdfjksa',
+        secret: process.env.SESSION_SECRET,
         resave: false,
     }));
     const apolloServer = new apollo_server_express_1.ApolloServer({
@@ -84,8 +84,10 @@ const main = async () => {
         cors: false,
     });
     app.listen(process.env.PORT, () => {
-        console.log('server started on localhost:4000');
+        console.log('The server has started');
     });
 };
-main();
+main().catch((err) => {
+    console.error(err);
+});
 //# sourceMappingURL=index.js.map

@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavBar } from './NavBar';
 import { Wrapper, WrapperVariant } from './Wrapper';
-
+import '../../src/theme';
 interface LayoutProps {
   variant?: WrapperVariant;
 }
