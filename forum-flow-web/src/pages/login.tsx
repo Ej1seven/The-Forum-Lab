@@ -71,7 +71,8 @@ export const Login: React.FC<{}> = ({}) => {
             <Button
               mt={4}
               type="submit"
-              colorScheme="teal"
+              bg="#004E7C"
+              color="white"
               //if isSubmitting is false then the spinning icon appears
               isLoading={isSubmitting}
             >

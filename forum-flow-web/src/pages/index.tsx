@@ -91,6 +91,8 @@ const Index = () => {
             isLoading={fetching}
             m="auto"
             my={8}
+            bg="#004E7C"
+            color="white"
           >
             load more
           </Button>
