@@ -5,3 +5,30 @@
 .navigation {
   color: #dce1e3;
 }
+
+.menuBtn {
+  display: none;
+}
+
+.menuOptions {
+  display: block;
+}
+
+@media (max-width: 600px) {
+  .menuBtn {
+    display: block;
+  }
+  .menuOptions {
+    display: none;
+  }
+}
+
+@media (max-width: 425px) {
+  #logo {
+    width: 150px;
+    padding: 4px;
+  }
+  #logo-text {
+    font-size: 1.1rem;
+  }
+}

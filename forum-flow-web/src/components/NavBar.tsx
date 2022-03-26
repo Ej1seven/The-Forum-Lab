@@ -8,6 +8,7 @@ import {
 } from '../generated/graphql';
 import { isServer } from '../utils/isServer';
 import { useRouter } from 'next/router';
+import { MenuBtn } from './MenuBtn';
 
 interface NavBarProps {}
 
@@ -63,24 +64,31 @@ export const NavBar: React.FC<NavBarProps> = ({}) => {
     <Flex
       zIndex={1}
       bg="#004E7C"
-      p={4}
+      p={3}
       position="sticky"
       top={0}
       className="navigation"
     >
       <Flex flex={1} mx="5%" w="80%" align="center">
-        <Box p=".4%" bg="#dce1e3" w="250px">
-          <Box p=".4%" border="2px" borderColor="#b73225" bg="#004E7C">
+        <Box p="6px" bg="#dce1e3" w="250px" id="logo">
+          <Box p=".4%" border="4px" borderColor="#b73225" bg="#004E7C">
             <NextLink href="/">
               <Link>
                 <Heading size="lg">
-                  <Text align="center"> The Forum Lab</Text>
+                  <Text align="center" id="logo-text">
+                    The Forum Lab
+                  </Text>
                 </Heading>
               </Link>
             </NextLink>
           </Box>
         </Box>
-        <Box ml={'auto'}>{body}</Box>
+        <Box ml={'auto'} className="menuOptions">
+          {body}
+        </Box>
+        <Box ml={'auto'} className="menuBtn">
+          <MenuBtn data={data} fetching={fetching} logout={logout} />
+        </Box>
       </Flex>
     </Flex>
   );
