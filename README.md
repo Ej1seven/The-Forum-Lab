@@ -1,4 +1,4 @@
-# Example app with [chakra-ui](https://github.com/chakra-ui/chakra-ui)
+<!-- # Example app with [chakra-ui](https://github.com/chakra-ui/chakra-ui)
 
 This example features how to use [chakra-ui](https://github.com/chakra-ui/chakra-ui) as the component library within a Next.js app.
 
@@ -32,7 +32,7 @@ Deploy it to the cloud with [Vercel](https://vercel.com/new?utm_source=github&ut
 
 Chakra has supported Gradients and RTL in `v1.1`. To utilize RTL, [add RTL direction and swap](https://chakra-ui.com/docs/features/rtl-support).
 
-If you don't have multi-direction app, you should make `<Html lang="ar" dir="rtl">` inside `_document.js`.
+If you don't have multi-direction app, you should make `<Html lang="ar" dir="rtl">` inside `_document.js`. -->
 
 <div id="top"></div>
 <!--
@@ -63,7 +63,7 @@ If you don't have multi-direction app, you should make `<Html lang="ar" dir="rtl
 <br />
 <div align="center">
   <a href="https://github.com/othneildrew/Best-README-Template">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+    <img src="src/public/The Forum Lab.png" alt="Logo" width="80" height="80">
   </a>
 
   <h3 align="center">Best-README-Template</h3>
