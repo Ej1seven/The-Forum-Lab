@@ -63,9 +63,7 @@ If you don't have multi-direction app, you should make `<Html lang="ar" dir="rtl
 <br />
 <div align="center">
   
-  ![The San Juan Mountains are beautiful!](forum-flow-web/public/ForumLabLogo.png "San Juan Mountains")
-
-    <!-- <img src="forum-flow-web\public\ForumLabLogo.png" alt="Logo" width="400" height="400"> -->
+  ![The Forum Lab Logo](forum-flow-web/public/ForumLabLogo.png "The Forum Lab Logo")
 
   <h3 align="center">Best-README-Template</h3>
 
