@@ -270,5 +270,5 @@ Use this space to list resources you find helpful and would like to give credit 
 [license-shield]: https://img.shields.io/github/license/ej1seven/The-Forum-Lab.svg?style=plastic
 [license-url]: https://github.com/ej1seven/The-Forum-Lab/blob/master/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=plastic&logo=linkedin&colorB=555
-[linkedin-url]: https://linkedin.com/in/ej1seven
+[linkedin-url]: https://linkedin.com/in/erik-hunter/
 [product-screenshot]: images/screenshot.png
