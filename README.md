@@ -260,15 +260,15 @@ Use this space to list resources you find helpful and would like to give credit 
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 
 [contributors-shield]: https://img.shields.io/github/contributors/ej1seven/The-Forum-Lab?style=plastic
-[contributors-url]: https://github.com/ej1seven/Best-README-Template/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/ej1seven/Best-README-Template.svg?style=for-the-badge
-[forks-url]: https://github.com/ej1seven/Best-README-Template/network/members
-[stars-shield]: https://img.shields.io/github/stars/ej1seven/Best-README-Template.svg?style=for-the-badge
-[stars-url]: https://github.com/ej1seven/Best-README-Template/stargazers
-[issues-shield]: https://img.shields.io/github/issues/ej1seven/Best-README-Template.svg?style=for-the-badge
-[issues-url]: https://github.com/ej1seven/Best-README-Template/issues
-[license-shield]: https://img.shields.io/github/license/ej1seven/Best-README-Template.svg?style=for-the-badge
-[license-url]: https://github.com/ej1seven/Best-README-Template/blob/master/LICENSE.txt
+[contributors-url]: https://github.com/ej1seven/The-Forum-Lab/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/ej1seven/The-Forum-Lab.svg?style=for-the-badge
+[forks-url]: https://github.com/ej1seven/The-Forum-Lab/network/members
+[stars-shield]: https://img.shields.io/github/stars/ej1seven/The-Forum-Lab.svg?style=for-the-badge
+[stars-url]: https://github.com/ej1seven/The-Forum-Lab/stargazers
+[issues-shield]: https://img.shields.io/github/issues/ej1seven/The-Forum-Lab.svg?style=for-the-badge
+[issues-url]: https://github.com/ej1seven/The-Forum-Lab/issues
+[license-shield]: https://img.shields.io/github/license/ej1seven/The-Forum-Lab.svg?style=for-the-badge
+[license-url]: https://github.com/ej1seven/The-Forum-Lab/blob/master/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/ej1seven
 [product-screenshot]: images/screenshot.png
