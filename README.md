@@ -56,7 +56,6 @@ If you don't have multi-direction app, you should make `<Html lang="ar" dir="rtl
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
 [![LinkedIn][linkedin-shield]][linkedin-url]
 
 <!-- PROJECT LOGO -->
@@ -267,8 +266,6 @@ Use this space to list resources you find helpful and would like to give credit 
 [stars-url]: https://github.com/ej1seven/The-Forum-Lab/stargazers
 [issues-shield]: https://img.shields.io/github/issues/ej1seven/The-Forum-Lab.svg?style=plastic
 [issues-url]: https://github.com/ej1seven/The-Forum-Lab/issues
-[license-shield]: https://img.shields.io/github/license/ej1seven/The-Forum-Lab.svg?style=plastic
-[license-url]: https://github.com/ej1seven/The-Forum-Lab/blob/master/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=plastic&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/erik-hunter/
 [product-screenshot]: images/screenshot.png
