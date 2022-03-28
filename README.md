@@ -151,27 +151,26 @@ To get a local copy up and running follow these simple example steps.
    ```
 
 2. Install NPM packages
+
    ```sh
    npm install
    ```
-3. Create `.env` file for web
 
    ```js
    NEXT_PUBLIC_API_URL = put - your - graphql - api - url;
    ```
 
-4. Create `.env` file for server
+3. Create `.env` file for server
 
    ```js
-   DATABASE_URL=put-in-your-postgres-database-url
-   REDIS_URL=put-your-redis-url
-   PORT=put-your-server-port-number
-   SESSION_SECRET=put-your-session-password
-   CORS_ORIGIN=put-your-localhost-url
-
+   DATABASE_URL = put - your - postgres - database - url;
+   REDIS_URL = put - your - redis - url;
+   PORT = put - your - server - port - number;
+   SESSION_SECRET = put - your - session - password;
+   CORS_ORIGIN = put - your - localhost - url;
    ```
 
-5. Create `.env.production` file for server
+4. Create `.env.production` file for server
 
    ```js
    SESSION_SECRET = put - your - session - password;
