@@ -140,34 +140,42 @@ Social media is an integral part of our lives, and many of us seek a place to ex
 
 ## Getting Started
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
-
-### Prerequisites
-
-This is an example of how to list things you need to use the software and how to install them.
-
-- npm
-  ```sh
-  npm install npm@latest -g
-  ```
+````
 
 ### Installation
 
 _Below is an example of how you can instruct your audience on installing and setting up your app. This template doesn't rely on any external dependencies or services._
 
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
-   ```sh
-   git clone https://github.com/your_username_/Project-Name.git
-   ```
-3. Install NPM packages
+1. Clone the repo
+ ```sh
+ git clone https://github.com/Ej1seven/The-Forum-Lab.git
+```
+
+2. Install NPM packages
    ```sh
    npm install
    ```
-4. Enter your API in `config.js`
+3. Create `.env` file for web
    ```js
-   const API_KEY = 'ENTER YOUR API';
+   NEXT_PUBLIC_API_URL = put - your - graphql - api - url;
+````
+
+4. Create `.env` file for server
+
+   ```js
+   DATABASE_URL=put-in-your-postgres-database-url
+   REDIS_URL=put-your-redis-url
+   PORT=put-your-server-port-number
+   SESSION_SECRET=put-your-session-password
+   CORS_ORIGIN=put-your-localhost-url
+
+   ```
+
+5. Create `.env.production` file for server
+
+   ```js
+   SESSION_SECRET = put - your - session - password;
+   CORS_ORIGIN = put - your - production - website - url;
    ```
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -264,3 +272,7 @@ Use this space to list resources you find helpful and would like to give credit 
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=plastic&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/erik-hunter/
 [product-screenshot]: images/screenshot.png
+
+```
+
+```
