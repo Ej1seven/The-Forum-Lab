@@ -179,27 +179,16 @@ To get a local copy up and running follow these simple example steps.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-<!-- USAGE EXAMPLES -->
-
-## Usage
-
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
-
-_For more examples, please refer to the [Documentation](https://example.com)_
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
 <!-- ROADMAP -->
 
 ## Roadmap
 
-- [x] Add Changelog
-- [x] Add back to top links
-- [ ] Add Additional Templates w/ Examples
-- [ ] Add "components" document to easily copy & paste sections of the readme
-- [ ] Multi-language Support
-  - [ ] Chinese
-  - [ ] Spanish
+### MVP / User Stories
+
+- [x] As a user, I can register my information so I can log in when I want to post content
+- [x] As a user, I can vote up or down on posts once I am logged in
+- [x] As a user, I want to be able to edit my post if I make a mistake
+- [x] As a user, I want to be able to delete my post if I make a mistake
 
 See the [open issues](https://github.com/ej1seven/The-Forum-Lab/issues) for a full list of proposed features (and known issues).
 
