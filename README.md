@@ -132,6 +132,7 @@ Social media is an integral part of our lives, and many of us seek a place to ex
 - [MikroOrm](https://mikro-orm.io/)
 - [Argon2](https://www.npmjs.com/package/argon2)
 - [Dataloader](https://www.npmjs.com/package/dataloader)
+- [Vercel](https://vercel.com/)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
