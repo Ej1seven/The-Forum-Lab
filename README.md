@@ -155,11 +155,10 @@ git clone https://github.com/Ej1seven/The-Forum-Lab.git
    npm install
    ```
 3. Create `.env` file for web
+
    ```js
    NEXT_PUBLIC_API_URL = put - your - graphql - api - url;
    ```
-
-````
 
 4. Create `.env` file for server
 
@@ -281,4 +280,7 @@ Use this space to list resources you find helpful and would like to give credit 
 ```
 
 ```
-````
+
+```
+
+```
