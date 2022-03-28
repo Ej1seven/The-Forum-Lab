@@ -151,16 +151,16 @@ To get a local copy up and running follow these simple example steps.
    ```
 
 2. Install NPM packages
-
    ```sh
    npm install
    ```
+3. Create `.env` file for web
 
    ```js
    NEXT_PUBLIC_API_URL = put - your - graphql - api - url;
    ```
 
-3. Create `.env` file for server
+4. Create `.env` file for server
 
    ```js
    DATABASE_URL = put - your - postgres - database - url;
@@ -170,7 +170,7 @@ To get a local copy up and running follow these simple example steps.
    CORS_ORIGIN = put - your - localhost - url;
    ```
 
-4. Create `.env.production` file for server
+5. Create `.env.production` file for server
 
    ```js
    SESSION_SECRET = put - your - session - password;
